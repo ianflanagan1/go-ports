@@ -1,11 +1,16 @@
 # go-ports
 
-TODO: what it provides, and for whom.
+The plain values that ports exchange, shared by every project on [go-baseline](https://github.com/ianflanagan1/go-baseline). It's a `pure-library`: nothing here does I/O, so a project's core can build requests and queries and read responses and rows, and its shell can declare ports in these types. [go-adapters](https://github.com/ianflanagan1/go-adapters) implements those ports.
+
+| Package | Values | Adapter in go-adapters |
+|---|---|---|
+| `httpmsg` | `Request`, `Response` | `httpsend` |
+| `sqlmsg` | `Query`, `Rows`, `Result`, `Value`, and the `Tx` port for transactions | `sqlquery` |
 
 ## Usage
 
 ```go
-import "github.com/ianflanagan1/go-ports"
+import "github.com/ianflanagan1/go-ports/httpmsg"
 ```
 
 ## Architecture
