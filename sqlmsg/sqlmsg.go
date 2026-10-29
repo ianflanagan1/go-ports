@@ -5,59 +5,41 @@ package sqlmsg
 
 import "time"
 
-// Kind is the type of a Value.
-type Kind int
+// Value is a query argument or a column value: Null, Int, Float, Text,
+// Bytes, Bool or Time. Read one with a type switch that has a case for each.
+//
+//sumtype:decl
+type Value interface{ isValue() }
 
-const (
-	// Null is SQL NULL.
-	Null Kind = iota
-	// Int is a whole number.
-	Int
-	// Float is a floating-point number.
-	Float
-	// Text is a string, or a value in its database's text format, such as
-	// a decimal number.
-	Text
-	// Bytes is binary data.
-	Bytes
-	// Bool is true or false.
-	Bool
-	// Time is a timestamp or date.
-	Time
-)
+// Null is SQL NULL.
+type Null struct{}
 
-// Value is a query argument or a column value. Kind says which field holds
-// it; the others are zero.
-type Value struct {
-	Kind  Kind
-	Int   int64
-	Float float64
-	Text  string
-	Bytes []byte
-	Bool  bool
-	Time  time.Time
-}
+// Int is a whole number.
+type Int int64
 
-// NullValue returns SQL NULL.
-func NullValue() Value { return Value{Kind: Null} }
+// Float is a floating-point number.
+type Float float64
 
-// IntValue returns v as a Value.
-func IntValue(v int64) Value { return Value{Kind: Int, Int: v} }
+// Text is a string, or a value in its database's text format, such as a
+// decimal number.
+type Text string
 
-// FloatValue returns v as a Value.
-func FloatValue(v float64) Value { return Value{Kind: Float, Float: v} }
+// Bytes is binary data.
+type Bytes []byte
 
-// TextValue returns v as a Value.
-func TextValue(v string) Value { return Value{Kind: Text, Text: v} }
+// Bool is true or false.
+type Bool bool
 
-// BytesValue returns v as a Value.
-func BytesValue(v []byte) Value { return Value{Kind: Bytes, Bytes: v} }
+// Time is a timestamp or date.
+type Time struct{ time.Time }
 
-// BoolValue returns v as a Value.
-func BoolValue(v bool) Value { return Value{Kind: Bool, Bool: v} }
-
-// TimeValue returns v as a Value.
-func TimeValue(v time.Time) Value { return Value{Kind: Time, Time: v} }
+func (Null) isValue()  {}
+func (Int) isValue()   {}
+func (Float) isValue() {}
+func (Text) isValue()  {}
+func (Bytes) isValue() {}
+func (Bool) isValue()  {}
+func (Time) isValue()  {}
 
 // Query is a SQL statement and its arguments, written with the database's
 // placeholders: $1, $2 and so on for Postgres.

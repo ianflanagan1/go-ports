@@ -1,39 +1,51 @@
 package sqlmsg_test
 
 import (
-	"reflect"
 	"testing"
 	"time"
 
 	"github.com/ianflanagan1/go-ports/sqlmsg"
 )
 
-func TestEachConstructorSetsItsKindAndField(t *testing.T) {
-	now := time.Date(2026, time.October, 28, 9, 0, 0, 0, time.UTC)
-	for _, tc := range []struct {
-		name string
-		got  sqlmsg.Value
-		want sqlmsg.Value
-	}{
-		{"null", sqlmsg.NullValue(), sqlmsg.Value{Kind: sqlmsg.Null}},
-		{"int", sqlmsg.IntValue(7), sqlmsg.Value{Kind: sqlmsg.Int, Int: 7}},
-		{"float", sqlmsg.FloatValue(1.5), sqlmsg.Value{Kind: sqlmsg.Float, Float: 1.5}},
-		{"text", sqlmsg.TextValue("a"), sqlmsg.Value{Kind: sqlmsg.Text, Text: "a"}},
-		{"bool", sqlmsg.BoolValue(true), sqlmsg.Value{Kind: sqlmsg.Bool, Bool: true}},
-		{"time", sqlmsg.TimeValue(now), sqlmsg.Value{Kind: sqlmsg.Time, Time: now}},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			if !reflect.DeepEqual(tc.got, tc.want) {
-				t.Fatalf("got %+v, want %+v", tc.got, tc.want)
-			}
-		})
+// describe reads a Value the way a caller does, with an exhaustive switch.
+func describe(v sqlmsg.Value) string {
+	switch v := v.(type) {
+	case sqlmsg.Null:
+		return "null"
+	case sqlmsg.Int:
+		return "int"
+	case sqlmsg.Float:
+		return "float"
+	case sqlmsg.Text:
+		return "text " + string(v)
+	case sqlmsg.Bytes:
+		return "bytes " + string(v)
+	case sqlmsg.Bool:
+		return "bool"
+	case sqlmsg.Time:
+		return "time " + v.Format(time.DateOnly)
 	}
+	return "unreachable"
 }
 
-func TestBytesValueKeepsTheBytes(t *testing.T) {
-	got := sqlmsg.BytesValue([]byte("ab"))
-	if got.Kind != sqlmsg.Bytes || string(got.Bytes) != "ab" {
-		t.Fatalf("got %+v", got)
+func TestEachKindOfValueIsItsOwnType(t *testing.T) {
+	for _, tc := range []struct {
+		value sqlmsg.Value
+		want  string
+	}{
+		{sqlmsg.Null{}, "null"},
+		{sqlmsg.Int(7), "int"},
+		{sqlmsg.Float(1.5), "float"},
+		{sqlmsg.Text("a"), "text a"},
+		{sqlmsg.Bytes("ab"), "bytes ab"},
+		{sqlmsg.Bool(true), "bool"},
+		{sqlmsg.Time{Time: time.Date(2026, time.October, 28, 9, 0, 0, 0, time.UTC)}, "time 2026-10-28"},
+	} {
+		t.Run(tc.want, func(t *testing.T) {
+			if got := describe(tc.value); got != tc.want {
+				t.Fatalf("got %q, want %q", got, tc.want)
+			}
+		})
 	}
 }
 
